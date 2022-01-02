@@ -1,6 +1,6 @@
 const express = require('express');
-const db = require('db/connections');
-const apiRoutes = require('./routes');
+const db = require('./db/connections');
+const apiRoutes = require('./routes/apiRoutes');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -12,15 +12,15 @@ app.use(express.json());
 // use apiRoutes
 app.use('/api', apiRoutes);
 
-// default (not found) response
+// default response for any other request (not found)
 app.use((req, res) => {
-    res.status(400).end();
+    res.status(404).end();
 });
 
 // start server after DB connection
 db.connect(err => {
     if (err) throw err;
-    console.log('Database connected');
+    console.log('Database connected.');
     app.listen(PORT, () => {
         console.log(`Server is now running on port ${PORT}`);
     });

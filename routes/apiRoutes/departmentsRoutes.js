@@ -37,6 +37,23 @@ router.post('/department/', ({ body }, res) => {
 });
 
 // delete a department
-router.delete('/department/:name')
+router.delete('/department/:name', (req, res) => {
+    const sql = `DELETE FROM departments WHERE name = ?`;
+    const params = [req.params.name];
+
+    db.query(sql, params, (err, result) => {
+        if (err) {
+            res.status(400).json({ error: res.message });
+        } else if (!result.affectedRows) {
+            res.json({ message: 'Deparment not found'});
+        } else {
+            res.json({
+                message: 'deleted',
+                changes: result.affectedRows,
+                name: req.params.name
+            });
+        }
+    });
+});
 
 module.exports = router;
