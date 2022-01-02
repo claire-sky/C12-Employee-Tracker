@@ -56,6 +56,28 @@ router.delete('/employee/:id', (req, res) => {
     });
 });
 
+// update an employees role
+router.put('/employee/:id', (req, res) => {
+    const sql = `UPDATE employees SET role_id = ?
+                WHERE id = ?`;
+    const params = [req.body.role_id, req.params.id];
+    db.query(sql, params, (err, result) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+        } else if (!result.affectedRows) {
+            res.json({
+                message: 'Employee not found'
+            });
+        } else {
+            res.json({
+                message: 'success',
+                data: req.body,
+                changes: result.affectedRows
+            });
+        }
+    });
+});
+
 // `SELECT id, CONCAT(first_name, ' ', last_name) AS employee_name FROM employees`;
 
 // `SELECT b.id,
