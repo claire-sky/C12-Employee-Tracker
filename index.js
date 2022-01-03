@@ -20,6 +20,9 @@ const routing = () => {
                 'Delete an Employee',
                 'Update an Employee Role',
                 'Update an Employee Manager',
+                'View Employees by Manager',
+                'View Employees by Department',
+                'View Department Budgets',
                 'Exit'
             ]
         }
@@ -36,28 +39,37 @@ const routing = () => {
                     viewAllEmployees();
                     break;
                 case 'Add a Department':
-                    AddDepartment();
+                    addDepartment();
                     break;
                 case 'Add a Role':
-                    AddRole();
+                    addRole();
                     break;
                 case 'Add an Employee':
-                    AddEmployee();
+                    addEmployee();
                     break;
                 case 'Delete a Department':
-                    DeleteDepartment();
+                    deleteDepartment();
                     break;
                 case 'Delete a Role':
-                    DeleteRole();
+                    deleteRole();
                     break;
                 case 'Delete an Employee':
-                    DeleteEmployee();
+                    deleteEmployee();
                     break;
                 case 'Update an Employee Role':
-                    UpdateEmployeeRole();
+                    updateEmployeeRole();
                     break;
                 case 'Update an Employee Manager':
-                    UpdateEmployeeManager();
+                    updateEmployeeManager();
+                    break;
+                case 'View Employees by Manager':
+                    viewEmployeesByManager();
+                    break;
+                case 'View Employees by Department':
+                    viewEmployeesByDepartment();
+                    break;
+                case 'View Department Budgets':
+                    viewDepartmentBudgets();
                     break;
                 case 'Exit':
                     process.exit();
@@ -95,7 +107,7 @@ const viewAllEmployees = () => {
         .then(routing);
 };
 
-const AddDepartment = () => {
+const addDepartment = () => {
     const sql = `INSERT INTO departments (department) VALUES (?)`;
 
     inquirer.prompt([
@@ -113,7 +125,7 @@ const AddDepartment = () => {
         )
 };
 
-const AddRole = () => {
+const addRole = () => {
     const sql = `INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)`;
     db.query(`SELECT * FROM departments ORDER BY id`, (err, result) => {
         if (err) throw err;
@@ -145,7 +157,7 @@ const AddRole = () => {
     });
 };
 
-const AddEmployee = () => {
+const addEmployee = () => {
     const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
     VALUES (?,?,?,?)`;
     db.query(`SELECT * FROM employees ORDER BY last_name`, (err, result) => {
@@ -189,7 +201,7 @@ const AddEmployee = () => {
     });
 };
 
-const DeleteDepartment = () => {
+const deleteDepartment = () => {
     const sql = `DELETE FROM departments WHERE id = ?`;
     db.query(`SELECT * FROM departments ORDER BY id`, (err, result) => {
         if (err) throw err;
@@ -211,7 +223,7 @@ const DeleteDepartment = () => {
     });
 };
 
-const DeleteRole = () => {
+const deleteRole = () => {
     const sql = `DELETE FROM roles WHERE id = ?`;
     db.query(`SELECT * FROM roles ORDER BY id`, (err, result) => {
         if (err) throw err;
@@ -233,7 +245,7 @@ const DeleteRole = () => {
     });
 };
 
-const DeleteEmployee = () => {
+const deleteEmployee = () => {
     const sql = `DELETE FROM employees WHERE id = ?`;
     db.query(`SELECT * FROM employees ORDER BY id`, (err, result) => {
         if (err) throw err;
@@ -256,7 +268,7 @@ const DeleteEmployee = () => {
     });
 };
 
-const UpdateEmployeeRole = () => {
+const updateEmployeeRole = () => {
     const sql = `UPDATE employees SET role_id = ?
     WHERE id = ?`;
     db.query(`SELECT * FROM employees ORDER BY last_name`, (err, result) => {
@@ -290,17 +302,17 @@ const UpdateEmployeeRole = () => {
     });
 };
 
-const UpdateEmployeeManager = () => {
+const updateEmployeeManager = () => {
     const sql = `UPDATE employees SET manager_id = ?
     WHERE id = ?`;
     db.query(`SELECT * FROM employees ORDER BY last_name`, (err, result) => {
         if (err) throw err;
         const employeeList = result.map(({ first_name, last_name, id }) => (
             { name: first_name + ' ' + last_name, value: id }))
-            db.query(`SELECT * FROM employees ORDER BY last_name`, (err, result) => {
-                if (err) throw err;
-                const managerList = result.map(({ first_name, last_name, id }) => (
-                    { name: first_name + ' ' + last_name, value: id }))
+        db.query(`SELECT * FROM employees ORDER BY last_name`, (err, result) => {
+            if (err) throw err;
+            const managerList = result.map(({ first_name, last_name, id }) => (
+                { name: first_name + ' ' + last_name, value: id }))
             inquirer.prompt([
                 {
                     type: 'rawlist',
@@ -325,5 +337,52 @@ const UpdateEmployeeManager = () => {
     });
 };
 
+const viewEmployeesByManager = () => {
+    const sql = `SELECT CONCAT (a.first_name, ' ', a.last_name) AS Manager,
+                CONCAT(b.first_name, ' ', b.last_name) AS 'Direct Reporting' 
+                FROM employees b
+                INNER JOIN employees a ON
+                a.id = b.manager_id
+                ORDER BY Manager;`;
+
+    db.promise().query(sql)
+        .then(rows => {
+            console.table(rows[0]);
+        })
+        .then(routing);
+};
+
+const viewEmployeesByDepartment = () => {
+    const sql = `SELECT CONCAT (employees.first_name, ' ', employees.last_name) AS Employee,
+                departments.department as Department
+                FROM employees
+                INNER JOIN roles ON
+                employees.role_id = roles.id
+                INNER JOIN departments ON
+                roles.department_id = departments.id
+                ORDER BY Department;`;
+
+    db.promise().query(sql)
+        .then(rows => {
+            console.table(rows[0]);
+        })
+        .then(routing);
+};
+
+const viewDepartmentBudgets = () => {
+    const sql = `SELECT departments.department as Department,
+    SUM ( roles.salary ) AS Budget
+    FROM departments
+    INNER JOIN roles ON
+    departments.id = roles.department_id
+    GROUP BY Department
+    ORDER BY Budget desc;`;
+
+db.promise().query(sql)
+.then(rows => {
+console.table(rows[0]);
+})
+.then(routing);
+};
 
 routing();
