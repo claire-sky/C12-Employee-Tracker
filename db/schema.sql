@@ -4,8 +4,8 @@ DROP TABLE IF EXISTS employees;
 
 CREATE TABLE departments (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(30) NOT NULL,
-    CONSTRAINT uc_name UNIQUE (name)
+    department VARCHAR(30) NOT NULL,
+    CONSTRAINT uc_department UNIQUE (department)
 );
 
 CREATE TABLE roles (
